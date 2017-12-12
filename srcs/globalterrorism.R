@@ -94,7 +94,7 @@ sample <- sample[,!(names(sample) %in% drops)]
 table(sample$success)
 
 set.seed(1000)
-inTrain <- createDataPartition(y=sample$success, p=.80, list=FALSE)
+inTrain <- createDataPartition(y=sample$success, p=.70, list=FALSE)
 trainSplit <- sample[inTrain,]
 length(trainSplit$success)
 testSplit <- sample[-inTrain,]
@@ -145,7 +145,7 @@ x.train.rose <- rose_train[,!(names(rose_train) %in% c("success"))]
 y.test <- testSplit$success
 x.test <- testSplit[,!(names(testSplit) %in% c("success"))]
 
-ctrl <- trainControl(method="cv", number=5,
+ctrl <- trainControl(method="cv", number=10,
                      classProbs=TRUE,
                      summaryFunction = twoClassSummary, # twoClassSummary for binary
                      allowParallel =  TRUE)
@@ -171,6 +171,7 @@ varImp(m.nb.rose)
 
 #pred <- prediction(p.nb, y.test)
 #perf <- performance(pred, "tpr", "fpr")
+
 
 ##### Decision Tree #####
 
@@ -284,41 +285,51 @@ bwplot(rValues, metric="Sens") #Sensitvity
 bwplot(rValues, metric="Spec")
 
 p.treebag <- predict(m.treebag.rose, x.test)
-confusionMatrix(p.treebag, y.test) #0.7341
+confusionMatrix(p.treebag, y.test) #0.7203
 
 p.nnet <- predict(m.nnet.rose, x.test)
-confusionMatrix(p.nnet, y.test) #0.6964
+confusionMatrix(p.nnet, y.test) #0.6782
 
 p.rpart <- predict(m.rpart.rose, x.test)
-confusionMatrix(p.rpart, y.test) #0.3632
+confusionMatrix(p.rpart, y.test) #0.3603
 
 p.rf <- predict(m.rf.rose, x.test)
-confusionMatrix(p.rf, y.test) #0.8149
+confusionMatrix(p.rf, y.test) #0.807
 
 p.nb <- predict(m.nb.rose, x.test)
-confusionMatrix(p.nb, y.test) #0.7865
+confusionMatrix(p.nb, y.test) #0.6263
 
 p.ada <- predict(m.ada.rose, x.test)
-confusionMatrix(p.ada, y.test) #0.4857
+confusionMatrix(p.ada, y.test) #0.5358
 
 p.treebag.prob <- predict(m.treebag.rose, x.test, type = "prob")
 p.nnet.prob <- predict(m.nnet.rose, x.test, type = "prob")
 p.rf.prob <- predict(m.rf.rose, x.test, type = "prob")
+p.ada.prob <- predict(m.ada.rose, x.test, type = "prob")
+p.rpart.prob <- predict(m.rpart.rose, x.test, type = "prob")
 p.nb.prob <- predict(m.nb.rose, x.test, type = "prob")
 
 # using FAIL as positive class
 p.treebag.roc <- roc(response = y.test, predictor = p.treebag.prob$FAIL)
 p.nnet.roc <- roc(response = y.test, predictor = p.nnet.prob$FAIL)
 p.rf.roc <- roc(response = y.test, predictor = p.rf.prob$FAIL)
+p.ada.roc <- roc(response = y.test, predictor = p.ada.prob$FAIL)
+p.rpart.roc <- roc(response = y.test, predictor = p.rpart.prob$FAIL)
 p.nb.roc <- roc(response = y.test, predictor = p.nb.prob$FAIL)
 auc(p.treebag.roc)
 auc(p.nnet.roc)
 auc(p.rf.roc)
+auc(p.ada.roc)
+auc(p.rpart.roc)
 auc(p.nb.roc)
 
-plot(p.treebag.roc, col="black")
-plot(p.nnet.roc, add=T, col="red")
-plot(p.nb.roc, add=T, col="blue")
-legend(x=.34, y=.3, cex=1, legend=c("treebag","nnet", "naiveBayes"), col=c("black", "red", "blue"), lwd=5)
+plot(smooth(p.treebag.roc), col="black")
+plot(smooth(p.nnet.roc), add=T, col="red")
+plot(smooth(p.nb.roc), add=T, col="blue")
+plot(smooth(p.rf.roc), add=T, col="green")
+plot(smooth(p.ada.roc), add=T, col="orange")
+plot(p.rpart.roc, add=T, col="yellow")
+legend(x=.3, y=.56, cex=1, legend=c("treebag","nnet", "naiveBayes", "rf", "ada", "rpart"), col=c("black", "red", "blue", "green", "orange", "yellow"), lwd=5)
 
-varImp(m.treebag.rose)
+varImp(m.rf.rose)
+
